@@ -1,2 +1,2 @@
 # espRemoteRelay
-Remote Relay management with Nodemcu esp2856 from socket, http and mqtt
+Remote Relay Management with Nodemcu esp8266 from socket, http and mqtt
