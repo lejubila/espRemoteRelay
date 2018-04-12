@@ -24,20 +24,34 @@ httpserver = {
                 end
             end
 
-            data = {
+            local data = {
                 head_title = 'espRemoteRelay',
                 title = 'espRemoteRelay',
                 body = '<ul>' .. html_relay .. '</ul>'
             }
 
+            --[[
+            if httpServer.authenticate(req.source) == nil then
+                res:basicAuthentication()
+            end
+            --]]
             res:send( httpserver.tpl_render('base.tpl', data) )
         end)
 
         httpServer:use('/open', function(req, res)
-            if req.query.relay and relay.close(req.query.relay) then
+            local user = 'anonymous'
+
+            if config_httpserver.auth.enabled then
+                user = httpServer.authenticate(req.source)
+                if  user == nil then
+                    res:basicAuthentication()
+                end
+            end
+
+            if user ~= nil and req.query.relay and relay.close(req.query.relay) then
                 res:redirect('/')
             else
-                data = {
+                local data = {
                     head_title = 'espRemoteRelay',
                     title = 'espRemoteRelay',
                     body = '<p>Open Error</p><p><a href="/">Return to home</a></p>'
@@ -47,10 +61,19 @@ httpserver = {
         end)
 
         httpServer:use('/close', function(req, res)
-            if req.query.relay and relay.open(req.query.relay) then
+            local user = 'anonymous'
+
+            if config_httpserver.auth.enabled then
+                user = httpServer.authenticate(req.source)
+                if  user == nil then
+                    res:basicAuthentication()
+                end
+            end
+
+            if user ~= nil and req.query.relay and relay.open(req.query.relay) then
                 res:redirect('/')
             else
-                data = {
+                local data = {
                     head_title = 'espRemoteRelay',
                     title = 'espRemoteRelay',
                     body = '<p>Close Error</p><p><a href="/">Return to home</a></p>'
@@ -62,7 +85,7 @@ httpserver = {
     end,
 
     tpl_render = function(tpl_file, data)
-        tpl = '';
+        local tpl = '';
         if file.open(tpl_file) then
             tpl = file.read()
             file.close()

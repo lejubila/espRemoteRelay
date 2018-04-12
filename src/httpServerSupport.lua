@@ -32,6 +32,7 @@ Res = {
     _type = nil,
     _status = nil,
     _redirectUrl = nil,
+    _basicAuthentication = nil
 }
 
 function Res:new(skt)
@@ -58,6 +59,11 @@ function Res:status(status)
     self._status = status
 end
 
+function Res:basicAuthentication()
+    self._basicAuthentication = true
+    self._status = 401
+end
+
 function Res:send(body)
     self._status = self._status or 200
     self._type = self._type or 'text/html'
@@ -67,6 +73,9 @@ function Res:send(body)
             .. 'Content-Length:' .. string.len(body) .. '\r\n'
     if self._redirectUrl ~= nil then
         buf = buf .. 'Location: ' .. self._redirectUrl .. '\r\n'
+    end
+    if self._basicAuthentication then
+        buf = buf .. 'WWW-Authenticate: Basic realm="' ..  config_httpserver.auth.realm .. '"'
     end
     buf = buf .. '\r\n' .. body
 
@@ -210,4 +219,10 @@ function httpServer:listen(port)
             collectgarbage()
         end)
     end)
+end
+
+function httpServer.authenticate(payload)
+    local auth = dofile("httpserver-basicauth.lua")
+    local user = auth.authenticate(payload, config_httpserver.auth.users) -- authenticate returns nil on failed auth
+    return user
 end
